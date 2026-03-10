@@ -14,7 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      patients: {
+        Row: {
+          admit_time: number
+          age: number
+          bed: string
+          created_at: string
+          dia: number
+          gender: string
+          hr: number
+          id: string
+          name: string
+          risk_level: string
+          risk_score: number
+          rr: number
+          sepsis_flags: string[]
+          spo2: number
+          status: string
+          survival_prediction: string
+          sys: number
+          temp: number
+          trend_history: Json
+          updated_at: string
+        }
+        Insert: {
+          admit_time: number
+          age: number
+          bed: string
+          created_at?: string
+          dia?: number
+          gender: string
+          hr?: number
+          id: string
+          name: string
+          risk_level?: string
+          risk_score?: number
+          rr?: number
+          sepsis_flags?: string[]
+          spo2?: number
+          status?: string
+          survival_prediction?: string
+          sys?: number
+          temp?: number
+          trend_history?: Json
+          updated_at?: string
+        }
+        Update: {
+          admit_time?: number
+          age?: number
+          bed?: string
+          created_at?: string
+          dia?: number
+          gender?: string
+          hr?: number
+          id?: string
+          name?: string
+          risk_level?: string
+          risk_score?: number
+          rr?: number
+          sepsis_flags?: string[]
+          spo2?: number
+          status?: string
+          survival_prediction?: string
+          sys?: number
+          temp?: number
+          trend_history?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
