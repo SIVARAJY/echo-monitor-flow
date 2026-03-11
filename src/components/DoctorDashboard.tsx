@@ -73,7 +73,7 @@ export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardP
     // Speak patient names
     try {
       window.speechSynthesis.cancel();
-      const names = alarmingPatients.map(p => p.name).join(', and ');
+      const names = alarmingPatients.map(p => `the patient ${p.name}`).join(', and ');
       const plural = alarmingPatients.length > 1 ? 'patients' : 'patient';
       const msg = new SpeechSynthesisUtterance(
         `Alert! High risk ${plural}: ${names}. Immediate attention required.`
