@@ -41,7 +41,8 @@ export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardP
   }, []);
 
   const activePatients = patients
-    .filter(p => p.status !== 'discharged');
+    .filter(p => p.status !== 'discharged')
+    .sort((a, b) => a.admitTime - b.admitTime);
 
   const monPatient = patients.find(p => p.id === monitorPatient);
 
