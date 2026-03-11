@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Patient, formatDuration } from '@/lib/sepsisEngine';
-import { Activity, LogOut, Eye, TrendingUp } from 'lucide-react';
+import { Activity, LogOut, Eye, TrendingUp, BellOff, Bell } from 'lucide-react';
 import ProfessionalMonitor from './ProfessionalMonitor';
 
 interface DoctorDashboardProps {
