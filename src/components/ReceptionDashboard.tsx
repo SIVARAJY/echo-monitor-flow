@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Patient, generatePatientId, generateBedNumber, getDefaultVitals, calculateRisk, calculateSurvivalTime, formatDuration } from '@/lib/sepsisEngine';
 import { UserPlus, LogOut, Clock, Bed } from 'lucide-react';
 
@@ -15,10 +15,10 @@ export default function ReceptionDashboard({ patients, onAdmit, onDischarge, onL
   const [gender, setGender] = useState<'M' | 'F'>('M');
   const [now, setNow] = useState(Date.now());
 
-  useState(() => {
+  useEffect(() => {
     const iv = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(iv);
-  });
+  }, []);
 
   const handleAdmit = () => {
     if (!name.trim() || !age) return;
