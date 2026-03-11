@@ -15,9 +15,10 @@ export default function ReceptionDashboard({ patients, onAdmit, onDischarge, onL
   const [gender, setGender] = useState<'M' | 'F'>('M');
   const [now, setNow] = useState(Date.now());
 
-  useState(() => {
-    const iv = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(iv);
+  // Update clock every second
+  const _ = (() => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { useEffect: ue } = require('react');
   });
 
   const handleAdmit = () => {

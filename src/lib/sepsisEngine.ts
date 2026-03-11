@@ -115,7 +115,8 @@ export function generateBedNumber(): string {
   return `ICU-${String(nextBed++).padStart(2, '0')}`;
 }
 
-let nextId = 1;
 export function generatePatientId(): string {
-  return `P-${String(nextId++).padStart(4, '0')}`;
+  const now = Date.now();
+  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `P-${now}-${rand}`;
 }
