@@ -44,7 +44,9 @@ export default function ReceptionDashboard({ patients, onAdmit, onDischarge, onL
     setAge('');
   };
 
-  const activePatients = patients.filter(p => p.status !== 'discharged');
+  const activePatients = patients
+    .filter(p => p.status !== 'discharged')
+    .sort((a, b) => a.admitTime - b.admitTime);
 
   return (
     <div className="min-h-screen p-4">
