@@ -179,6 +179,20 @@ export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardP
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-vital-yellow">{p.survivalPrediction}</span>
+                    {(p.riskLevel === 'critical' || p.riskLevel === 'danger') && (
+                      silencedPatients.has(p.id) ? (
+                        <span className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono text-muted-foreground">
+                          <BellOff className="w-3 h-3" /> Silenced
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => silencePatient(p.id)}
+                          className="flex items-center gap-1 px-2 py-1 bg-destructive/10 border border-destructive/30 rounded text-[10px] font-mono text-destructive hover:bg-destructive/20 transition-all animate-pulse"
+                        >
+                          <Bell className="w-3 h-3" /> Alarm ON
+                        </button>
+                      )
+                    )}
                     <button
                       onClick={() => setMonitorPatient(p.id)}
                       className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-md text-xs font-mono text-primary hover:bg-primary/20 transition-all"
