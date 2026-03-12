@@ -1,40 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 220 20% 8%;
-    --foreground: 210 20% 90%;
+    --background: 0 0% 100%;
+    --foreground: 220 20% 10%;
 
-    --card: 220 18% 12%;
-    --card-foreground: 210 20% 90%;
+    --card: 0 0% 98%;
+    --card-foreground: 220 20% 10%;
 
-    --popover: 220 18% 14%;
-    --popover-foreground: 210 20% 90%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
 
     --primary: 160 60% 45%;
-    --primary-foreground: 220 20% 8%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 210 20% 80%;
+    --secondary: 220 10% 95%;
+    --secondary-foreground: 220 20% 20%;
 
-    --muted: 220 15% 15%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 220 10% 93%;
+    --muted-foreground: 220 10% 45%;
 
     --accent: 200 80% 55%;
-    --accent-foreground: 220 20% 8%;
+    --accent-foreground: 220 20% 10%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
+    --border: 220 10% 85%;
+    --input: 220 10% 85%;
     --ring: 160 60% 45%;
 
-    --radius: 0.5rem;
+--radius: 0.75rem;
 
     /* Clinical tokens */
     --vital-green: 160 60% 45%;
@@ -45,21 +45,21 @@
     --vital-cyan: 185 70% 50%;
     --vital-purple: 270 60% 60%;
 
-    --monitor-bg: 220 25% 6%;
-    --monitor-border: 220 15% 18%;
+    --monitor-bg: 220 10% 96%;
+    --monitor-border: 220 10% 85%;
     --monitor-glow: 160 60% 45%;
 
     --wave-ecg: 160 60% 50%;
     --wave-spo2: 200 80% 55%;
     --wave-resp: 45 90% 55%;
 
-    --sidebar-background: 220 18% 10%;
-    --sidebar-foreground: 210 20% 80%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 220 20% 15%;
     --sidebar-primary: 160 60% 45%;
-    --sidebar-primary-foreground: 220 20% 8%;
-    --sidebar-accent: 220 15% 16%;
-    --sidebar-accent-foreground: 210 20% 80%;
-    --sidebar-border: 220 15% 18%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 10% 93%;
+    --sidebar-accent-foreground: 220 20% 20%;
+    --sidebar-border: 220 10% 85%;
     --sidebar-ring: 160 60% 45%;
   }
 }
@@ -72,6 +72,8 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
   }
 
   .font-mono {
