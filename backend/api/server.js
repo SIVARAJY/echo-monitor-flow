@@ -132,8 +132,19 @@ app.get('/api/staff', async (req, res) => {
 
 // ── GET /api/patients ────────────────────────────────────────
 app.get('/api/patients', async (req, res) => {
+  const { doctorId } = req.query;
   try {
-    const [rows] = await pool.query('SELECT * FROM patients ORDER BY admit_time DESC');
+    let query = 'SELECT * FROM patients WHERE status != "discharged"';
+    const params = [];
+
+    if (doctorId && doctorId !== 'null' && doctorId !== 'undefined') {
+      query += ' AND doctor_id = ?';
+      params.push(doctorId);
+    }
+
+    query += ' ORDER BY admit_time DESC';
+    
+    const [rows] = await pool.query(query, params);
     // Parse JSON fields
     const patients = rows.map(r => ({
       ...r,
@@ -152,8 +163,8 @@ app.post('/api/patients', async (req, res) => {
   const p = req.body;
   try {
     await pool.query(
-      `INSERT INTO patients (id, name, age, gender, admit_time, bed, status, hr, sys, dia, rr, spo2, temp, risk_score, risk_level, sepsis_flags, survival_prediction, trend_history, doctor_name, doctor_photo, doctor_specialty)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO patients (id, name, age, gender, admit_time, bed, status, hr, sys, dia, rr, spo2, temp, risk_score, risk_level, sepsis_flags, survival_prediction, trend_history, doctor_name, doctor_photo, doctor_specialty, doctor_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         p.id, p.name, p.age, p.gender, p.admit_time, p.bed, p.status || 'admitted',
         p.hr, p.sys, p.dia, p.rr, p.spo2, p.temp,
@@ -162,6 +173,7 @@ app.post('/api/patients', async (req, res) => {
         p.survival_prediction || 'Stable',
         JSON.stringify(p.trend_history || []),
         p.doctor_name || null, p.doctor_photo || null, p.doctor_specialty || null,
+        p.doctor_id || null,
       ]
     );
     res.status(201).json({ success: true, id: p.id });

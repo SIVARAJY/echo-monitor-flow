@@ -6,47 +6,54 @@
 
 @layer base {
   :root {
-    /* ── Dark hospital/ICU base ─────────────────────────────── */
-    --background: 222 28% 7%;
-    --foreground: 210 20% 96%;
+    /* ── Light Clinical Blue Theme ───────────────────────────────── */
+    /* Background: #caf0f8 (Light Cyan) -> HSL: 191, 71%, 88% */
+    --background: 191 71% 88%;
+    /* Foreground: Deep Blue/Black for high contrast readability */
+    --foreground: 201 100% 15%;
 
-    --card: 222 24% 11%;
-    --card-foreground: 210 20% 96%;
+    /* Cards: Clean white to stand out from the light blue background */
+    --card: 0 0% 100%;
+    --card-foreground: 201 100% 15%;
 
-    --popover: 222 24% 11%;
-    --popover-foreground: 210 20% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 201 100% 15%;
 
-    --primary: 160 65% 48%;
-    --primary-foreground: 222 28% 7%;
+    /* Primary: #0077b6 (Blue) -> HSL: 201, 100%, 36% */
+    --primary: 201 100% 36%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 20% 16%;
-    --secondary-foreground: 210 15% 75%;
+    /* Secondary: Soft blue-grey for secondary elements */
+    --secondary: 191 50% 94%;
+    --secondary-foreground: 201 100% 25%;
 
-    --muted: 222 20% 14%;
-    --muted-foreground: 210 12% 52%;
+    /* Muted: Subdued blue-grey for less important text */
+    --muted: 191 30% 90%;
+    --muted-foreground: 201 30% 45%;
 
-    --accent: 200 85% 55%;
-    --accent-foreground: 222 28% 7%;
+    --accent: 201 100% 36%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 80% 58%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 18% 20%;
-    --input: 222 18% 20%;
-    --ring: 160 65% 48%;
+    /* Borders and rings */
+    --border: 191 40% 80%;
+    --input: 191 40% 80%;
+    --ring: 201 100% 36%;
 
     --radius: 0.5rem;
 
-    /* ── Clinical vital colour tokens ───────────────────────── */
-    --vital-green:  160 65% 48%;
-    --vital-yellow:  45 95% 58%;
-    --vital-orange:  25 95% 58%;
-    --vital-red:      0 80% 60%;
-    --vital-blue:   200 85% 58%;
-    --vital-cyan:   185 70% 52%;
-    --vital-purple: 270 60% 62%;
+    /* ── Clinical vital colour tokens (Adjusted for light theme) ── */
+    --vital-green:  150 75% 38%;  /* Darker green for white bg */
+    --vital-yellow:  40 95% 45%;  /* Darker yellow/orange */
+    --vital-orange:  25 95% 50%;
+    --vital-red:      0 84% 50%;  /* Stronger red */
+    --vital-blue:   200 85% 45%;
+    --vital-cyan:   185 70% 35%;
+    --vital-purple: 270 60% 50%;
 
-    /* ── Monitor / bedside canvas ───────────────────────────── */
+    /* ── Monitor / bedside canvas (Keep dark for contrast) ──────── */
     --monitor-bg:     222 30% 5%;
     --monitor-border: 222 18% 22%;
     --monitor-glow:   160 65% 48%;
@@ -55,17 +62,18 @@
     --wave-spo2: 200 85% 58%;
     --wave-resp:  45 95% 58%;
 
-    /* ── Sidebar tokens ─────────────────────────────────────── */
-    --sidebar-background: 222 26% 9%;
-    --sidebar-foreground: 210 20% 88%;
-    --sidebar-primary: 160 65% 48%;
-    --sidebar-primary-foreground: 222 28% 7%;
-    --sidebar-accent: 222 20% 16%;
-    --sidebar-accent-foreground: 210 15% 75%;
-    --sidebar-border: 222 18% 20%;
-    --sidebar-ring: 160 65% 48%;
+    /* ── Sidebar tokens (Clean White sidebar) ───────────────────── */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 201 100% 25%;
+    --sidebar-primary: 201 100% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 191 50% 94%;
+    --sidebar-accent-foreground: 201 100% 25%;
+    --sidebar-border: 191 40% 80%;
+    --sidebar-ring: 201 100% 36%;
   }
 }
+
 
 @layer base {
   * {
@@ -108,32 +116,32 @@
 
   /* ── Risk / vital badges ─────────────────────────────────────── */
   .vital-badge {
-    @apply px-2 py-0.5 rounded text-xs font-mono font-semibold tracking-wide;
+    @apply px-2 py-0.5 rounded text-[11px] font-mono font-semibold tracking-wide border;
   }
 
   .vital-stable {
-    background: hsl(var(--vital-green) / 0.15);
+    background: hsl(var(--vital-green) / 0.1);
     color: hsl(var(--vital-green));
-    border: 1px solid hsl(var(--vital-green) / 0.35);
+    border-color: hsl(var(--vital-green) / 0.3);
   }
 
   .vital-warning {
     background: hsl(var(--vital-yellow) / 0.15);
     color: hsl(var(--vital-yellow));
-    border: 1px solid hsl(var(--vital-yellow) / 0.35);
+    border-color: hsl(var(--vital-yellow) / 0.4);
   }
 
   .vital-danger {
-    background: hsl(var(--vital-orange) / 0.18);
+    background: hsl(var(--vital-orange) / 0.15);
     color: hsl(var(--vital-orange));
-    border: 1px solid hsl(var(--vital-orange) / 0.4);
+    border-color: hsl(var(--vital-orange) / 0.4);
   }
 
   .vital-critical {
-    background: hsl(var(--vital-red) / 0.2);
+    background: hsl(var(--vital-red) / 0.15);
     color: hsl(var(--vital-red));
-    border: 1px solid hsl(var(--vital-red) / 0.5);
-    animation: pulse-critical 1s ease-in-out infinite;
+    border-color: hsl(var(--vital-red) / 0.5);
+    animation: pulse-critical 1.5s ease-in-out infinite;
   }
 
   /* ── Coloured left-border accent on patient cards ────────────── */

@@ -20,6 +20,7 @@ export async function loginWithDB(
       return {
         role: data.role as UserRole,
         staffId: data.staffId,
+        doctorId: data.doctorId,
       };
     }
 

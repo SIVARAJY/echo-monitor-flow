@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Patient, Vitals, calculateRisk, calculateSurvivalTime } from '@/lib/sepsisEngine';
 import { Cpu, LogOut, Sliders, AlertTriangle, Zap, Send } from 'lucide-react';
+import { usePatients } from '@/hooks/usePatients';
 
 interface MachineHubProps {
-  patients: Patient[];
-  onUpdateVitals: (id: string, vitals: Vitals) => void;
   onLogout: () => void;
 }
 
@@ -22,7 +21,8 @@ const riskBorderClass: Record<string, string> = {
   critical: 'risk-border-critical',
 };
 
-export default function MachineHub({ patients, onUpdateVitals, onLogout }: MachineHubProps) {
+export default function MachineHub({ onLogout }: MachineHubProps) {
+  const { patients, handleUpdateVitals: onUpdateVitals } = usePatients();
   const activePatients = patients.filter(p => p.status !== 'discharged');
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
   const [manualVitals, setManualVitals] = useState<Vitals>({ hr: 75, sys: 120, dia: 80, rr: 16, spo2: 98, temp: 36.8 });

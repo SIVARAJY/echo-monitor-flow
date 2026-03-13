@@ -12,11 +12,13 @@ SepsisGuard goes beyond traditional patient monitors. It introduces **5 innovati
 
 | Feature | Description |
 |---------|-------------|
-| 🧠 **AI Sepsis Prediction Timeline** | Forecasts patient deterioration 1–6 hours ahead using linear regression on vital trend data |
-| 🔔 **Smart Escalation Protocol** | Automatically triggers "CODE SEPSIS" with desktop notifications if a patient stays critical for >2 minutes |
-| 📊 **Vitals Correlation Heatmap** | Real-time matrix showing dangerous vital-to-vital correlations (e.g., HR↑ + BP↓ = sepsis) |
-| 🏥 **Shift Handoff Report** | One-click printable clinical summary with AI forecasts for nurse/doctor shift changes |
-| 🌡️ **Multi-Patient Radar Chart** | Compare up to 4 patients' vitals on a single normalized radar overlay |
+| 🧠 **AI Sepsis Prediction** | Forecasts patient deterioration 1–6 hours ahead using linear regression on vital trend data |
+| 🔔 **Smart Escalation** | Automatically triggers "CODE SEPSIS" red alerts if a patient stays critical for >2 minutes |
+| 📊 **Vitals Heatmap** | Real-time matrix showing dangerous vital-to-vital correlations |
+| 🏥 **Shift Handoff Report** | Printable clinical summary with AI forecasts for physician shift changes |
+| 🌡️ **Radar Comparison** | Side-by-side SVG radar visualization of multiple patients' vitals |
+| 👨‍⚕️ **Physician Association** | Filtered views: doctors ONLY see their assigned patients |
+| 🎨 **Light Clinical Theme** | High-contrast, modern hospital UI utilizing a soothing cyan (`#caf0f8`) and bold blue (`#0077b6`) palette |
 
 ---
 
@@ -104,12 +106,12 @@ echo-monitor-flow/
 │   │   │   ├── HandoffReport.tsx        # 🆕 Printable shift report
 │   │   │   └── RadarCompare.tsx         # 🆕 Multi-patient radar
 │   │   ├── hooks/
-│   │   │   ├── useAuth.ts              # MySQL + fallback auth
-│   │   │   ├── usePatients.ts          # Supabase CRUD + realtime
-│   │   │   ├── useDoctors.ts           # Doctor data from API
-│   │   │   └── useEscalation.ts        # 🆕 Escalation protocol
+│   │   │   ├── useAuth.ts              # MySQL authentication
+│   │   │   ├── usePatients.ts          # Per-doctor MySQL polling & CRUD
+│   │   │   ├── useDoctors.ts           # Physician directory management
+│   │   │   └── useEscalation.ts        # Smart escalation timers
 │   │   └── lib/
-│   │       └── sepsisEngine.ts         # Risk scoring + 🆕 AI prediction
+│   │       └── sepsisEngine.ts         # Scoring + AI Deterioration Engine
 │   └── package.json
 ├── backend/
 │   ├── api/

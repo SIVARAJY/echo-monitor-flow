@@ -31,13 +31,14 @@ function rowToPatient(row: any): Patient {
   };
 }
 
-export function usePatients() {
+export function usePatients(doctorId?: number) {
   const [patients, setPatients] = useState<Patient[]>([]);
 
   // Fetch patients from MySQL API
   const fetchPatients = useCallback(async () => {
     try {
-      const res = await fetch('/api/patients');
+      const url = doctorId ? `/api/patients?doctorId=${doctorId}` : '/api/patients';
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setPatients(data.map(rowToPatient));
@@ -45,7 +46,7 @@ export function usePatients() {
     } catch {
       // API unreachable — keep current state
     }
-  }, []);
+  }, [doctorId]);
 
   // Initial fetch
   useEffect(() => {

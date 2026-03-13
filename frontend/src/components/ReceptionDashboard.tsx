@@ -1,12 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Patient, generatePatientId, generateBedNumber, getDefaultVitals, calculateRisk, calculateSurvivalTime, formatDuration } from '@/lib/sepsisEngine';
-import { useDoctors } from '@/hooks/useDoctors';
-import { UserPlus, LogOut, Clock, Bed, Activity } from 'lucide-react';
+import { useState } from 'react';
+import { Patient, Vitals, calculateRisk, calculateSurvivalTime } from '@/lib/sepsisEngine';
+import { Cpu, LogOut, Sliders, AlertTriangle, Zap, Send } from 'lucide-react';
+import { usePatients } from '@/hooks/usePatients';
 
 interface ReceptionDashboardProps {
-  patients: Patient[];
-  onAdmit: (patient: Patient) => void;
-  onDischarge: (id: string) => void;
   onLogout: () => void;
 }
 
@@ -26,23 +23,34 @@ function LiveClock() {
   );
 }
 
-export default function ReceptionDashboard({ patients, onAdmit, onDischarge, onLogout }: ReceptionDashboardProps) {
+import { useEffect } from 'react';
+import { Bed, UserPlus, Clock, Activity } from 'lucide-react';
+import { generatePatientId, generateBedNumber, getDefaultVitals } from '@/lib/sepsisEngine';
+import { useDoctors } from '@/hooks/useDoctors';
+
+export default function ReceptionDashboard({ onLogout }: ReceptionDashboardProps) {
+  const { patients, handleAdmit, handleDischarge } = usePatients();
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState<'M' | 'F'>('M');
+  const [selectedDoctorId, setSelectedDoctorId] = useState<number | ''>('');
   const [now, setNow] = useState(Date.now());
-  const { pickDoctor } = useDoctors();
+  const { dbDoctors } = useDoctors();
 
   useEffect(() => {
     const iv = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(iv);
   }, []);
 
-  const handleAdmit = () => {
-    if (!name.trim() || !age) return;
+  const handleAdmitPatient = () => {
+    if (!name.trim() || !age || !selectedDoctorId) return;
+    
+    const dbDoctor = dbDoctors.find(d => d.id === selectedDoctorId);
+    if (!dbDoctor) return;
+
     const vitals = getDefaultVitals();
     const { score, level, flags } = calculateRisk(vitals);
-    const doctor = pickDoctor();
+    
     const patient: Patient = {
       id: generatePatientId(),
       name: name.trim(),
@@ -57,13 +65,16 @@ export default function ReceptionDashboard({ patients, onAdmit, onDischarge, onL
       trendHistory: [{ time: Date.now(), score }],
       bed: generateBedNumber(),
       status: 'admitted',
-      doctorName: doctor.name,
-      doctorPhoto: doctor.photo,
-      doctorSpecialty: doctor.specialty,
-    };
-    onAdmit(patient);
+      doctorName: dbDoctor.name,
+      doctorPhoto: dbDoctor.photo_url,
+      doctorSpecialty: dbDoctor.specialty,
+      doctor_id: dbDoctor.id,
+    } as any;
+
+    handleAdmit(patient);
     setName('');
     setAge('');
+    setSelectedDoctorId('');
   };
 
   const activePatients = patients
@@ -104,34 +115,49 @@ export default function ReceptionDashboard({ patients, onAdmit, onDischarge, onL
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Age</label>
-                <input
-                  value={age}
-                  onChange={e => setAge(e.target.value)}
-                  type="number"
-                  placeholder="Years"
-                  className="w-full bg-secondary border border-border rounded-md px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Age</label>
+                  <input
+                    value={age}
+                    onChange={e => setAge(e.target.value)}
+                    type="number"
+                    placeholder="Years"
+                    className="w-full bg-secondary border border-border rounded-md px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Gender</label>
+                  <div className="flex gap-2 h-[46px]">
+                    <button
+                      onClick={() => setGender('M')}
+                      className={`flex-1 rounded-md text-sm font-mono font-semibold border transition-all ${gender === 'M' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'}`}
+                    >Male</button>
+                    <button
+                      onClick={() => setGender('F')}
+                      className={`flex-1 rounded-md text-sm font-mono font-semibold border transition-all ${gender === 'F' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'}`}
+                    >Female</button>
+                  </div>
+                </div>
               </div>
               <div>
-                <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Gender</label>
-                <div className="flex gap-2 h-[46px]">
-                  <button
-                    onClick={() => setGender('M')}
-                    className={`flex-1 rounded-md text-sm font-mono font-semibold border transition-all ${gender === 'M' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'}`}
-                  >Male</button>
-                  <button
-                    onClick={() => setGender('F')}
-                    className={`flex-1 rounded-md text-sm font-mono font-semibold border transition-all ${gender === 'F' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'}`}
-                  >Female</button>
-                </div>
+                <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Physician</label>
+                <select
+                  value={selectedDoctorId}
+                  onChange={e => setSelectedDoctorId(e.target.value ? parseInt(e.target.value) : '')}
+                  className="w-full h-[46px] bg-secondary border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
+                >
+                  <option value="">Select Doctor</option>
+                  {dbDoctors.map(doc => (
+                    <option key={doc.id} value={doc.id}>{doc.name} ({doc.specialty})</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
           <button
-            onClick={handleAdmit}
-            disabled={!name.trim() || !age}
+            onClick={handleAdmitPatient}
+            disabled={!name.trim() || !age || !selectedDoctorId}
             className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-md text-sm font-mono font-semibold hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <UserPlus className="w-4 h-4" /> Admit Patient
@@ -179,7 +205,6 @@ export default function ReceptionDashboard({ patients, onAdmit, onDischarge, onL
                       <td className="py-3 pr-4">
                         <span className={`vital-badge vital-${p.riskLevel}`}>{p.riskLevel.toUpperCase()}</span>
                       </td>
-                      {/* Doctor column */}
                       <td className="py-3 pr-4">
                         {p.doctorPhoto ? (
                           <div className="flex items-center gap-2">
@@ -189,8 +214,8 @@ export default function ReceptionDashboard({ patients, onAdmit, onDischarge, onL
                               className="w-8 h-8 rounded-full object-cover border-2 border-primary/40"
                             />
                             <div>
-                              <div className="text-xs font-semibold text-foreground leading-tight">{p.doctorName}</div>
-                              <div className="text-[10px] font-mono text-muted-foreground">{(p as any).doctorSpecialty}</div>
+                               <div className="text-xs font-semibold text-foreground leading-tight">{p.doctorName}</div>
+                               <div className="text-[10px] font-mono text-muted-foreground">{p.doctorSpecialty}</div>
                             </div>
                           </div>
                         ) : (
@@ -199,7 +224,7 @@ export default function ReceptionDashboard({ patients, onAdmit, onDischarge, onL
                       </td>
                       <td className="py-3 text-right">
                         <button
-                          onClick={() => onDischarge(p.id)}
+                          onClick={() => handleDischarge(p.id)}
                           className="px-3 py-1.5 text-xs font-mono text-destructive border border-destructive/40 rounded-md hover:bg-destructive/10 transition-colors"
                         >
                           Discharge

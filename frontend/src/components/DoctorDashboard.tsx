@@ -6,8 +6,11 @@ import HandoffReport from './HandoffReport';
 import RadarCompare from './RadarCompare';
 import { useEscalation } from '@/hooks/useEscalation';
 
+import { usePatients } from '@/hooks/usePatients';
+import { User } from '@/lib/sepsisEngine';
+
 interface DoctorDashboardProps {
-  patients: Patient[];
+  user: User;
   onLogout: () => void;
 }
 
@@ -59,7 +62,8 @@ const riskBorderClass: Record<string, string> = {
   critical: 'risk-border-critical',
 };
 
-export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardProps) {
+export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps) {
+  const { patients } = usePatients(user.doctorId);
   const [monitorPatient, setMonitorPatient] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const [silencedPatients, setSilencedPatients] = useState<Set<string>>(new Set());

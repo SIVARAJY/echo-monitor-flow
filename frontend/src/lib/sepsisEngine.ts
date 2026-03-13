@@ -31,6 +31,7 @@ export type UserRole = 'receptionist' | 'physician' | 'machinehub';
 export interface User {
   role: UserRole;
   staffId: string;
+  doctorId?: number;
 }
 
 const ROLE_CREDENTIALS: Record<UserRole, { prefix: string; key: string }> = {
