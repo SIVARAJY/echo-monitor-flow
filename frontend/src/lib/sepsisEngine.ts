@@ -139,3 +139,107 @@ export const DOCTORS: Doctor[] = [
 export function pickDoctor(): Doctor {
   return DOCTORS[Math.floor(Math.random() * DOCTORS.length)];
 }
+
+/* ── AI-Prediction helpers ──────────────────────────────────── */
+
+/**
+ * Simple linear regression on trend history.
+ * Returns slope (score change per hour) and R² confidence.
+ */
+export function linearRegression(history: { time: number; score: number }[]): {
+  slope: number;
+  intercept: number;
+  r2: number;
+} {
+  if (history.length < 2) return { slope: 0, intercept: 0, r2: 0 };
+
+  const n = history.length;
+  const startTime = history[0].time;
+  // Convert timestamps to hours
+  const xs = history.map(h => (h.time - startTime) / 3_600_000);
+  const ys = history.map(h => h.score);
+
+  const sumX = xs.reduce((a, b) => a + b, 0);
+  const sumY = ys.reduce((a, b) => a + b, 0);
+  const sumXY = xs.reduce((a, x, i) => a + x * ys[i], 0);
+  const sumX2 = xs.reduce((a, x) => a + x * x, 0);
+  const sumY2 = ys.reduce((a, y) => a + y * y, 0);
+
+  const denom = n * sumX2 - sumX * sumX;
+  if (denom === 0) return { slope: 0, intercept: ys[n - 1], r2: 0 };
+
+  const slope = (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+
+  // R²
+  const meanY = sumY / n;
+  const ssTot = ys.reduce((a, y) => a + (y - meanY) ** 2, 0);
+  const ssRes = ys.reduce((a, y, i) => a + (y - (slope * xs[i] + intercept)) ** 2, 0);
+  const r2 = ssTot === 0 ? 0 : 1 - ssRes / ssTot;
+
+  return { slope, intercept, r2 };
+}
+
+export interface PredictionResult {
+  predictedScore1h: number;
+  predictedLevel1h: 'stable' | 'warning' | 'danger' | 'critical';
+  predictedScore4h: number;
+  predictedLevel4h: 'stable' | 'warning' | 'danger' | 'critical';
+  hoursToThreshold: number | null; // hours until score >= 8 (critical), null = stable/decreasing
+  trend: 'improving' | 'stable' | 'worsening';
+  confidence: number; // 0–100
+}
+
+function scoreToLevel(score: number): 'stable' | 'warning' | 'danger' | 'critical' {
+  if (score >= 8) return 'critical';
+  if (score >= 5) return 'danger';
+  if (score >= 3) return 'warning';
+  return 'stable';
+}
+
+/**
+ * Predict future deterioration using trend analysis.
+ */
+export function predictDeterioration(
+  trendHistory: { time: number; score: number }[],
+  currentScore: number
+): PredictionResult {
+  if (trendHistory.length < 3) {
+    return {
+      predictedScore1h: currentScore,
+      predictedLevel1h: scoreToLevel(currentScore),
+      predictedScore4h: currentScore,
+      predictedLevel4h: scoreToLevel(currentScore),
+      hoursToThreshold: null,
+      trend: 'stable',
+      confidence: 0,
+    };
+  }
+
+  const { slope, r2 } = linearRegression(trendHistory);
+  const lastTime = trendHistory[trendHistory.length - 1].time;
+  const startTime = trendHistory[0].time;
+  const currentHours = (lastTime - startTime) / 3_600_000;
+
+  const pred1h = Math.max(0, Math.min(15, currentScore + slope * 1));
+  const pred4h = Math.max(0, Math.min(15, currentScore + slope * 4));
+
+  let hoursToThreshold: number | null = null;
+  if (slope > 0 && currentScore < 8) {
+    hoursToThreshold = Math.max(0, (8 - currentScore) / slope);
+    if (hoursToThreshold > 24) hoursToThreshold = null;
+  }
+
+  const trend: 'improving' | 'stable' | 'worsening' =
+    slope > 0.3 ? 'worsening' : slope < -0.3 ? 'improving' : 'stable';
+
+  return {
+    predictedScore1h: Math.round(pred1h * 10) / 10,
+    predictedLevel1h: scoreToLevel(Math.round(pred1h)),
+    predictedScore4h: Math.round(pred4h * 10) / 10,
+    predictedLevel4h: scoreToLevel(Math.round(pred4h)),
+    hoursToThreshold,
+    trend,
+    confidence: Math.round(Math.max(0, r2) * 100),
+  };
+}

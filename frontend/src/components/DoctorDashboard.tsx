@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Patient, formatDuration } from '@/lib/sepsisEngine';
-import { Activity, LogOut, Eye, TrendingUp, BellOff, Bell, AlertTriangle, Clock } from 'lucide-react';
+import { Patient, formatDuration, predictDeterioration } from '@/lib/sepsisEngine';
+import { Activity, LogOut, Eye, TrendingUp, TrendingDown, Minus, BellOff, Bell, AlertTriangle, Clock, FileText, Users, Brain, ShieldAlert, X } from 'lucide-react';
 import ProfessionalMonitor from './ProfessionalMonitor';
+import HandoffReport from './HandoffReport';
+import RadarCompare from './RadarCompare';
+import { useEscalation } from '@/hooks/useEscalation';
 
 interface DoctorDashboardProps {
   patients: Patient[];
@@ -43,6 +46,12 @@ function LiveClock() {
   );
 }
 
+const trendIcons = {
+  improving: <TrendingDown className="w-3 h-3 text-vital-green inline" />,
+  stable: <Minus className="w-3 h-3 text-muted-foreground inline" />,
+  worsening: <TrendingUp className="w-3 h-3 text-destructive inline" />,
+};
+
 const riskBorderClass: Record<string, string> = {
   stable:   'risk-border-stable',
   warning:  'risk-border-warning',
@@ -54,9 +63,14 @@ export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardP
   const [monitorPatient, setMonitorPatient] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const [silencedPatients, setSilencedPatients] = useState<Set<string>>(new Set());
+  const [showHandoff, setShowHandoff] = useState(false);
+  const [showRadar, setShowRadar] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
   const alarmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Escalation system
+  const { escalations, codeActive, acknowledgeAll, acknowledgeOne, getDangerDuration } = useEscalation(patients);
 
   useEffect(() => {
     const iv = setInterval(() => setNow(Date.now()), 1000);
@@ -136,12 +150,46 @@ export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardP
   const criticalCount = activePatients.filter(p => p.riskLevel === 'critical').length;
   const dangerCount = activePatients.filter(p => p.riskLevel === 'danger').length;
 
-  if (monPatient) {
-    return <ProfessionalMonitor patient={monPatient} onClose={() => setMonitorPatient(null)} />;
-  }
+  // Show sub-views
+  if (showHandoff) return <HandoffReport patients={patients} onClose={() => setShowHandoff(false)} />;
+  if (showRadar) return <RadarCompare patients={patients} onClose={() => setShowRadar(false)} />;
+  if (monPatient) return <ProfessionalMonitor patient={monPatient} onClose={() => setMonitorPatient(null)} />;
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* ── CODE SEPSIS Overlay ───────────────────────────────── */}
+      {codeActive && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center" style={{ background: 'hsla(0, 80%, 10%, 0.85)' }}>
+          <div className="bg-card border-2 border-destructive rounded-xl p-8 max-w-xl w-full mx-4 text-center animate-pulse">
+            <ShieldAlert className="w-16 h-16 text-destructive mx-auto mb-4" />
+            <h2 className="text-3xl font-mono font-bold text-destructive mb-2 tracking-widest">CODE SEPSIS</h2>
+            <p className="text-sm font-mono text-foreground mb-4">Immediate intervention required for escalated patients:</p>
+            <div className="space-y-2 mb-6">
+              {escalations.filter(e => !e.acknowledged).map(e => (
+                <div key={e.patientId} className="flex items-center justify-between bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3">
+                  <div className="text-left">
+                    <div className="text-sm font-semibold text-foreground">{e.patientName}</div>
+                    <div className="text-xs font-mono text-muted-foreground">{e.bed} · Score: {e.riskScore} · {e.riskLevel.toUpperCase()}</div>
+                  </div>
+                  <button
+                    onClick={() => acknowledgeOne(e.patientId)}
+                    className="px-3 py-1.5 bg-destructive text-destructive-foreground rounded text-xs font-mono font-semibold hover:opacity-90 transition-all"
+                  >
+                    ACK
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={acknowledgeAll}
+              className="w-full py-3 bg-destructive text-destructive-foreground rounded-lg text-sm font-mono font-bold hover:opacity-90 transition-all"
+            >
+              ACKNOWLEDGE ALL — RESPONSE INITIATED
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="hospital-header sticky top-0 z-10">
         <div className="flex items-center gap-3">
@@ -153,8 +201,14 @@ export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardP
             {dangerCount > 0 && <span className="vital-badge vital-danger">{dangerCount} DANGER</span>}
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <LiveClock />
+          {/* Escalation log count */}
+          {escalations.length > 0 && (
+            <span className="text-[10px] font-mono text-destructive bg-destructive/10 border border-destructive/30 px-2 py-1 rounded">
+              {escalations.filter(e => !e.acknowledged).length} Escalations
+            </span>
+          )}
           {alarmingPatients.length > 0 && (
             <button
               onClick={silenceAll}
@@ -163,6 +217,19 @@ export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardP
               <BellOff className="w-4 h-4" /> Silence All ({alarmingPatients.length})
             </button>
           )}
+          {/* Feature buttons */}
+          <button
+            onClick={() => setShowRadar(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 border border-accent/30 rounded-md text-xs font-mono text-accent hover:bg-accent/20 transition-all"
+          >
+            <Users className="w-3.5 h-3.5" /> Compare
+          </button>
+          <button
+            onClick={() => setShowHandoff(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-md text-xs font-mono text-primary hover:bg-primary/20 transition-all"
+          >
+            <FileText className="w-3.5 h-3.5" /> Handoff
+          </button>
           <button onClick={onLogout} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono">
             <LogOut className="w-4 h-4" /> Logout
           </button>
@@ -189,6 +256,10 @@ export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardP
           <div className="grid gap-3">
             {activePatients.map(p => {
               const v = p.vitals;
+              const pred = predictDeterioration(p.trendHistory, p.riskScore);
+              const dangerMs = getDangerDuration(p.id);
+              const dangerSec = dangerMs !== null ? Math.floor(dangerMs / 1000) : null;
+
               return (
                 <div
                   key={p.id}
@@ -268,6 +339,37 @@ export default function DoctorDashboard({ patients, onLogout }: DoctorDashboardP
                       <TrendGraph history={p.trendHistory} />
                     </div>
                   </div>
+
+                  {/* ── AI Prediction Bar (NEW) ─────────────────────────── */}
+                  <div className="flex items-center gap-3 bg-secondary/30 border border-border/30 rounded px-3 py-2 mb-2">
+                    <Brain className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+                    <span className="text-[10px] font-mono text-accent font-semibold tracking-widest">AI FORECAST</span>
+                    <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground">
+                      {trendIcons[pred.trend]}
+                      <span className={pred.trend === 'worsening' ? 'text-destructive font-semibold' : pred.trend === 'improving' ? 'text-vital-green' : ''}>{pred.trend.toUpperCase()}</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-muted-foreground">1h: <span className={`vital-badge vital-${pred.predictedLevel1h}`}>{pred.predictedScore1h}</span></span>
+                    <span className="text-[10px] font-mono text-muted-foreground">4h: <span className={`vital-badge vital-${pred.predictedLevel4h}`}>{pred.predictedScore4h}</span></span>
+                    {pred.hoursToThreshold !== null && (
+                      <span className="text-[10px] font-mono text-destructive font-bold animate-pulse">
+                        ⚠ CRITICAL in ~{pred.hoursToThreshold.toFixed(1)}h
+                      </span>
+                    )}
+                    {pred.confidence > 0 && (
+                      <span className="text-[9px] font-mono text-muted-foreground ml-auto">Confidence: {pred.confidence}%</span>
+                    )}
+                  </div>
+
+                  {/* ── Escalation timer (NEW) ──────────────────────────── */}
+                  {dangerSec !== null && dangerSec > 0 && (
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded text-[10px] font-mono mb-2 ${dangerSec >= 120 ? 'bg-destructive/15 border border-destructive/40 text-destructive' : 'bg-vital-orange/10 border border-vital-orange/30 text-vital-orange'}`}>
+                      <ShieldAlert className="w-3 h-3 flex-shrink-0" />
+                      <span>
+                        {dangerSec >= 120 ? '⚠ ESCALATED' : `Escalation in ${120 - dangerSec}s`}
+                        {' '} — In {p.riskLevel} for {Math.floor(dangerSec / 60)}m {dangerSec % 60}s
+                      </span>
+                    </div>
+                  )}
 
                   {/* Sepsis flags */}
                   {p.sepsisFlags.length > 0 && (

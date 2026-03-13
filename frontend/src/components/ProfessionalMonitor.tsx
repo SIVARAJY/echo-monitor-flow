@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { Patient, formatDuration } from '@/lib/sepsisEngine';
 import { X, Volume2, Radio } from 'lucide-react';
+import CorrelationHeatmap from './CorrelationHeatmap';
 
 interface ProfessionalMonitorProps {
   patient: Patient;
@@ -198,17 +199,28 @@ export default function ProfessionalMonitor({ patient, onClose }: ProfessionalMo
         ))}
       </div>
 
-      {/* ── Sepsis Flags ───────────────────────────────────────── */}
-      {patient.sepsisFlags.length > 0 && (
-        <div className="px-5 py-2.5 border-t flex items-center gap-3 flex-wrap" style={{ background: 'hsl(0 80% 60% / 0.12)', borderColor: 'hsl(0 80% 60% / 0.4)' }}>
-          <span className="text-xs font-mono text-destructive font-bold tracking-widest">⚠ FLAGS:</span>
-          {patient.sepsisFlags.map((f, i) => (
-            <span key={i} className="text-xs font-mono text-destructive/90 bg-destructive/10 border border-destructive/20 px-2 py-0.5 rounded">
-              {f}
-            </span>
-          ))}
+      {/* ── Bottom panels: Flags + Correlation Heatmap ────────── */}
+      <div className="flex border-t" style={{ borderColor: 'hsl(222 18% 18%)' }}>
+        {/* Sepsis Flags */}
+        <div className="flex-1 px-5 py-2.5">
+          {patient.sepsisFlags.length > 0 ? (
+            <div className="flex items-center gap-3 flex-wrap" style={{ background: 'hsl(0 80% 60% / 0.12)', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', border: '1px solid hsl(0 80% 60% / 0.3)' }}>
+              <span className="text-xs font-mono text-destructive font-bold tracking-widest">⚠ FLAGS:</span>
+              {patient.sepsisFlags.map((f, i) => (
+                <span key={i} className="text-xs font-mono text-destructive/90 bg-destructive/10 border border-destructive/20 px-2 py-0.5 rounded">
+                  {f}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs font-mono text-muted-foreground py-2">No active sepsis flags</div>
+          )}
         </div>
-      )}
+        {/* Correlation Heatmap */}
+        <div className="px-4 py-2.5 border-l" style={{ borderColor: 'hsl(222 18% 18%)' }}>
+          <CorrelationHeatmap patient={patient} />
+        </div>
+      </div>
     </div>
   );
 }
