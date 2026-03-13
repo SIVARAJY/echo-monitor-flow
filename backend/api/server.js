@@ -126,11 +126,101 @@ app.get('/api/staff', async (req, res) => {
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+// ── Patient CRUD (replaces Supabase) ─────────────────────────
+// ══════════════════════════════════════════════════════════════
+
+// ── GET /api/patients ────────────────────────────────────────
+app.get('/api/patients', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM patients ORDER BY admit_time DESC');
+    // Parse JSON fields
+    const patients = rows.map(r => ({
+      ...r,
+      sepsis_flags: typeof r.sepsis_flags === 'string' ? JSON.parse(r.sepsis_flags) : (r.sepsis_flags || []),
+      trend_history: typeof r.trend_history === 'string' ? JSON.parse(r.trend_history) : (r.trend_history || []),
+    }));
+    res.json(patients);
+  } catch (err) {
+    console.error('Error fetching patients:', err);
+    res.status(500).json({ error: 'Failed to fetch patients' });
+  }
+});
+
+// ── POST /api/patients ─── Admit a new patient ───────────────
+app.post('/api/patients', async (req, res) => {
+  const p = req.body;
+  try {
+    await pool.query(
+      `INSERT INTO patients (id, name, age, gender, admit_time, bed, status, hr, sys, dia, rr, spo2, temp, risk_score, risk_level, sepsis_flags, survival_prediction, trend_history, doctor_name, doctor_photo, doctor_specialty)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        p.id, p.name, p.age, p.gender, p.admit_time, p.bed, p.status || 'admitted',
+        p.hr, p.sys, p.dia, p.rr, p.spo2, p.temp,
+        p.risk_score || 0, p.risk_level || 'stable',
+        JSON.stringify(p.sepsis_flags || []),
+        p.survival_prediction || 'Stable',
+        JSON.stringify(p.trend_history || []),
+        p.doctor_name || null, p.doctor_photo || null, p.doctor_specialty || null,
+      ]
+    );
+    res.status(201).json({ success: true, id: p.id });
+  } catch (err) {
+    console.error('Error admitting patient:', err);
+    res.status(500).json({ error: 'Failed to admit patient' });
+  }
+});
+
+// ── PUT /api/patients/:id/vitals ─── Update vitals ───────────
+app.put('/api/patients/:id/vitals', async (req, res) => {
+  const { id } = req.params;
+  const { hr, sys, dia, rr, spo2, temp, risk_score, risk_level, sepsis_flags, survival_prediction } = req.body;
+  try {
+    await pool.query(
+      `UPDATE patients SET hr=?, sys=?, dia=?, rr=?, spo2=?, temp=?, risk_score=?, risk_level=?, sepsis_flags=?, survival_prediction=?, status='monitoring'
+       WHERE id=?`,
+      [hr, sys, dia, rr, spo2, temp, risk_score, risk_level, JSON.stringify(sepsis_flags || []), survival_prediction, id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating vitals:', err);
+    res.status(500).json({ error: 'Failed to update vitals' });
+  }
+});
+
+// ── PUT /api/patients/:id/status ─── Discharge etc ───────────
+app.put('/api/patients/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    await pool.query('UPDATE patients SET status=? WHERE id=?', [status, id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating status:', err);
+    res.status(500).json({ error: 'Failed to update status' });
+  }
+});
+
+// ── PUT /api/patients/:id/trends ─── Update trend history ────
+app.put('/api/patients/:id/trends', async (req, res) => {
+  const { id } = req.params;
+  const { trend_history } = req.body;
+  try {
+    await pool.query('UPDATE patients SET trend_history=? WHERE id=?', [JSON.stringify(trend_history), id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating trends:', err);
+    res.status(500).json({ error: 'Failed to update trends' });
+  }
+});
+
 // ── Start server ─────────────────────────────────────────────
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`✅ SepsisGuard API running at http://localhost:${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/api/health`);
-  console.log(`   Doctors: http://localhost:${PORT}/api/doctors`);
-  console.log(`   Login:   POST http://localhost:${PORT}/api/auth/login`);
+  console.log(`   Health:    http://localhost:${PORT}/api/health`);
+  console.log(`   Doctors:   http://localhost:${PORT}/api/doctors`);
+  console.log(`   Patients:  http://localhost:${PORT}/api/patients`);
+  console.log(`   Login:     POST http://localhost:${PORT}/api/auth/login`);
 });
+

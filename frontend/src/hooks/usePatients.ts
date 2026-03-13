@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Patient, Vitals, calculateRisk, calculateSurvivalTime } from '@/lib/sepsisEngine';
 
+/**
+ * Convert a DB row from the MySQL API to the app's Patient interface.
+ */
 function rowToPatient(row: any): Patient {
   return {
     id: row.id,
     name: row.name,
     age: row.age,
     gender: row.gender as 'M' | 'F',
-    admitTime: row.admit_time,
+    admitTime: Number(row.admit_time),
     vitals: {
       hr: Number(row.hr),
       sys: Number(row.sys),
@@ -32,11 +34,16 @@ function rowToPatient(row: any): Patient {
 export function usePatients() {
   const [patients, setPatients] = useState<Patient[]>([]);
 
-  // Fetch patients from DB
+  // Fetch patients from MySQL API
   const fetchPatients = useCallback(async () => {
-    const { data, error } = await supabase.from('patients').select('*');
-    if (!error && data) {
-      setPatients(data.map(rowToPatient));
+    try {
+      const res = await fetch('/api/patients');
+      if (res.ok) {
+        const data = await res.json();
+        setPatients(data.map(rowToPatient));
+      }
+    } catch {
+      // API unreachable — keep current state
     }
   }, []);
 
@@ -45,76 +52,108 @@ export function usePatients() {
     fetchPatients();
   }, [fetchPatients]);
 
-  // Realtime subscription
+  // Poll for changes every 2 seconds (replaces Supabase realtime)
   useEffect(() => {
-    const channel = supabase
-      .channel('patients-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, () => {
-        fetchPatients();
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    const iv = setInterval(fetchPatients, 2000);
+    return () => clearInterval(iv);
   }, [fetchPatients]);
 
   // Trend tracking: snapshot every 5 seconds
   useEffect(() => {
     const iv = setInterval(async () => {
-      const { data } = await supabase.from('patients').select('id, risk_score, trend_history, status');
-      if (!data) return;
-      for (const row of data) {
-        if (row.status === 'discharged') continue;
-        const history = (row.trend_history as any[]) || [];
-        const updated = [...history, { time: Date.now(), score: row.risk_score }].slice(-60);
-        await supabase.from('patients').update({ trend_history: updated }).eq('id', row.id);
+      try {
+        const res = await fetch('/api/patients');
+        if (!res.ok) return;
+        const data = await res.json();
+        for (const row of data) {
+          if (row.status === 'discharged') continue;
+          const history = (row.trend_history as any[]) || [];
+          const updated = [...history, { time: Date.now(), score: row.risk_score }].slice(-60);
+          await fetch(`/api/patients/${row.id}/trends`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trend_history: updated }),
+          });
+        }
+      } catch {
+        // API unreachable
       }
     }, 5000);
     return () => clearInterval(iv);
   }, []);
 
   const handleAdmit = useCallback(async (patient: Patient) => {
-    await supabase.from('patients').insert({
-      id: patient.id,
-      name: patient.name,
-      age: patient.age,
-      gender: patient.gender,
-      admit_time: patient.admitTime,
-      bed: patient.bed,
-      status: patient.status,
-      hr: patient.vitals.hr,
-      sys: patient.vitals.sys,
-      dia: patient.vitals.dia,
-      rr: patient.vitals.rr,
-      spo2: patient.vitals.spo2,
-      temp: patient.vitals.temp,
-      risk_score: patient.riskScore,
-      risk_level: patient.riskLevel,
-      sepsis_flags: patient.sepsisFlags,
-      survival_prediction: patient.survivalPrediction,
-      trend_history: patient.trendHistory as any,
-    });
-  }, []);
+    try {
+      await fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: patient.id,
+          name: patient.name,
+          age: patient.age,
+          gender: patient.gender,
+          admit_time: patient.admitTime,
+          bed: patient.bed,
+          status: patient.status,
+          hr: patient.vitals.hr,
+          sys: patient.vitals.sys,
+          dia: patient.vitals.dia,
+          rr: patient.vitals.rr,
+          spo2: patient.vitals.spo2,
+          temp: patient.vitals.temp,
+          risk_score: patient.riskScore,
+          risk_level: patient.riskLevel,
+          sepsis_flags: patient.sepsisFlags,
+          survival_prediction: patient.survivalPrediction,
+          trend_history: patient.trendHistory,
+          doctor_name: patient.doctorName || null,
+          doctor_photo: patient.doctorPhoto || null,
+        }),
+      });
+      // Refresh after admit
+      fetchPatients();
+    } catch {
+      // API unreachable
+    }
+  }, [fetchPatients]);
 
   const handleDischarge = useCallback(async (id: string) => {
-    await supabase.from('patients').update({ status: 'discharged' }).eq('id', id);
-  }, []);
+    try {
+      await fetch(`/api/patients/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'discharged' }),
+      });
+      fetchPatients();
+    } catch {
+      // API unreachable
+    }
+  }, [fetchPatients]);
 
   const handleUpdateVitals = useCallback(async (id: string, vitals: Vitals) => {
     const { score, level, flags } = calculateRisk(vitals);
-    await supabase.from('patients').update({
-      hr: vitals.hr,
-      sys: vitals.sys,
-      dia: vitals.dia,
-      rr: vitals.rr,
-      spo2: vitals.spo2,
-      temp: vitals.temp,
-      risk_score: score,
-      risk_level: level,
-      sepsis_flags: flags,
-      survival_prediction: calculateSurvivalTime(score),
-      status: 'monitoring',
-    }).eq('id', id);
-  }, []);
+    try {
+      await fetch(`/api/patients/${id}/vitals`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hr: vitals.hr,
+          sys: vitals.sys,
+          dia: vitals.dia,
+          rr: vitals.rr,
+          spo2: vitals.spo2,
+          temp: vitals.temp,
+          risk_score: score,
+          risk_level: level,
+          sepsis_flags: flags,
+          survival_prediction: calculateSurvivalTime(score),
+        }),
+      });
+      fetchPatients();
+    } catch {
+      // API unreachable
+    }
+  }, [fetchPatients]);
 
   return { patients, handleAdmit, handleDischarge, handleUpdateVitals };
 }
