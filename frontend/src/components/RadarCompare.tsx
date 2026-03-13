@@ -85,9 +85,9 @@ export default function RadarCompare({ patients, onClose }: RadarCompareProps) {
   const gridCircles = [0.25, 0.5, 0.75, 1.0];
 
   return (
-    <div className="fixed inset-0 z-50 flex" style={{ background: 'hsl(222 28% 7%)' }}>
+    <div className="fixed inset-0 z-50 flex bg-background">
       {/* Sidebar: patient selector */}
-      <div className="w-64 border-r border-border p-4 overflow-y-auto" style={{ background: 'hsl(222 26% 9%)' }}>
+      <div className="w-64 border-r border-border p-4 overflow-y-auto bg-card">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
@@ -147,7 +147,7 @@ export default function RadarCompare({ patients, onClose }: RadarCompareProps) {
                   cy={cy}
                   r={radius * pct}
                   fill="none"
-                  stroke="hsl(222, 15%, 20%)"
+                  stroke="hsl(var(--border))"
                   strokeWidth="0.5"
                   strokeDasharray="3,3"
                 />
@@ -156,13 +156,13 @@ export default function RadarCompare({ patients, onClose }: RadarCompareProps) {
               {/* Axes */}
               {axes.map((axis, i) => (
                 <g key={i}>
-                  <line x1={cx} y1={cy} x2={axis.x} y2={axis.y} stroke="hsl(222, 15%, 22%)" strokeWidth="0.5" />
+                  <line x1={cx} y1={cy} x2={axis.x} y2={axis.y} stroke="hsl(var(--border))" strokeWidth="0.5" />
                   <text
                     x={axis.labelX}
                     y={axis.labelY}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fill="hsl(210, 12%, 52%)"
+                    fill="hsl(var(--muted-foreground))"
                     fontSize="10"
                     fontFamily="'JetBrains Mono', monospace"
                   >

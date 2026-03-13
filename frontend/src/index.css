@@ -6,71 +6,72 @@
 
 @layer base {
   :root {
-    /* ── Light Clinical Blue Theme ───────────────────────────────── */
-    /* Background: #caf0f8 (Light Cyan) -> HSL: 191, 71%, 88% */
-    --background: 191 71% 88%;
-    /* Foreground: Deep Blue/Black for high contrast readability */
-    --foreground: 201 100% 15%;
+    /* ── Professional Enterprise SaaS Theme ───────────────────────────────── */
+    /* Background: #F8FAFC (Slate 50) -> HSL: 210, 40%, 98% */
+    --background: 210 40% 98%;
+    /* Foreground: #0F172A (Slate 900) -> HSL: 222, 47%, 11% */
+    --foreground: 222 47% 11%;
 
-    /* Cards: Clean white to stand out from the light blue background */
+    /* Cards: Pure White */
     --card: 0 0% 100%;
-    --card-foreground: 201 100% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 201 100% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary: #0077b6 (Blue) -> HSL: 201, 100%, 36% */
-    --primary: 201 100% 36%;
+    /* Primary: #2563EB (Blue 600) -> HSL: 221, 83%, 53% */
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Soft blue-grey for secondary elements */
-    --secondary: 191 50% 94%;
-    --secondary-foreground: 201 100% 25%;
+    /* Secondary: #F1F5F9 (Slate 100) -> HSL: 210, 40%, 96% */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    /* Muted: Subdued blue-grey for less important text */
-    --muted: 191 30% 90%;
-    --muted-foreground: 201 30% 45%;
+    /* Muted: Soft grey for secondary elements */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%; /* Slate 500 */
 
-    --accent: 201 100% 36%;
+    --accent: 221 83% 53%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    /* Destructive/Error: #DC2626 (Red 600) background with white text */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders and rings */
-    --border: 191 40% 80%;
-    --input: 191 40% 80%;
-    --ring: 201 100% 36%;
+    /* Borders: #94A3B8 (Slate 400) -> HSL: 215, 20%, 65% */
+    --border: 215 20% 65%;
+    --input: 215 20% 65%;
+    --ring: 221 83% 53%;
 
-    --radius: 0.5rem;
+    --radius: 0.375rem; /* Sharper enterprise border radius */
 
-    /* ── Clinical vital colour tokens (Adjusted for light theme) ── */
-    --vital-green:  150 75% 38%;  /* Darker green for white bg */
-    --vital-yellow:  40 95% 45%;  /* Darker yellow/orange */
-    --vital-orange:  25 95% 50%;
-    --vital-red:      0 84% 50%;  /* Stronger red */
-    --vital-blue:   200 85% 45%;
-    --vital-cyan:   185 70% 35%;
-    --vital-purple: 270 60% 50%;
+    /* ── Clinical vital colour tokens (Enterprise precision) ── */
+    --vital-green:  142 76% 36%; /* Emerald 600 */
+    --vital-yellow:  45 93% 47%; /* Amber 500 */
+    --vital-orange:  24 98% 50%; /* Orange 500 */
+    --vital-red:      0 72% 51%; /* Red 600 */
+    --vital-blue:   221 83% 53%; /* Blue 600 */
+    --vital-cyan:   199 89% 48%; /* Sky 500 */
+    --vital-purple: 270 59% 58%; /* Purple 500 */
 
-    /* ── Monitor / bedside canvas (Keep dark for contrast) ──────── */
-    --monitor-bg:     222 30% 5%;
-    --monitor-border: 222 18% 22%;
-    --monitor-glow:   160 65% 48%;
+    /* ── Monitor / bedside canvas (Deep slate for contrast) ──────── */
+    --monitor-bg:     222 47% 11%; /* Slate 900 */
+    --monitor-border: 215 28% 17%; /* Slate 800 */
+    --monitor-glow:   142 76% 36%;
 
-    --wave-ecg:  160 65% 52%;
-    --wave-spo2: 200 85% 58%;
-    --wave-resp:  45 95% 58%;
+    --wave-ecg:  142 76% 45%;
+    --wave-spo2: 199 89% 55%;
+    --wave-resp:  45 93% 55%;
 
-    /* ── Sidebar tokens (Clean White sidebar) ───────────────────── */
+    /* ── Sidebar tokens ───────────────────── */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 201 100% 25%;
-    --sidebar-primary: 201 100% 36%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 191 50% 94%;
-    --sidebar-accent-foreground: 201 100% 25%;
-    --sidebar-border: 191 40% 80%;
-    --sidebar-ring: 201 100% 36%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 215 20% 65%;
+    --sidebar-ring: 221 83% 53%;
   }
 }
 
@@ -87,24 +88,30 @@
     line-height: 1.6rem;
   }
 
-  .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+  button {
+    @apply transition-all duration-200 transform-gpu;
+  }
+
+  button:hover:not(:disabled) {
+    @apply opacity-90;
+  }
+
+  button:active:not(:disabled) {
+    @apply scale-95 brightness-90;
   }
 }
 
 @layer components {
   /* ── Card used across all dashboards ────────────────────────── */
   .clinical-card {
-    @apply bg-card border border-border rounded-lg p-4;
-    box-shadow: 0 2px 12px hsla(222, 28%, 4%, 0.5),
-                inset 0 1px 0 hsla(210, 20%, 96%, 0.04);
+    @apply bg-card border border-border rounded-xl p-5 transition-shadow duration-200;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
   }
 
   /* ── Top header strip used in every dashboard ───────────────── */
   .hospital-header {
-    @apply flex items-center justify-between px-5 py-3 border-b border-border;
-    background: hsl(222 26% 9%);
-    box-shadow: 0 2px 8px hsla(222, 28%, 4%, 0.6);
+    @apply flex items-center justify-between px-6 py-4 border-b border-border bg-white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
   }
 
   /* ── Bedside monitor canvas background ──────────────────────── */
@@ -197,6 +204,16 @@
 @keyframes scanline {
   0%   { transform: translateY(-100%); }
   100% { transform: translateY(100%); }
+}
+
+@keyframes progress {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-progress {
+  animation: progress 2s linear infinite;
 }
 
 /* ── Utility helpers for new features ──────────────────────────── */

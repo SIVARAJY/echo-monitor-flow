@@ -24,6 +24,8 @@ export interface Patient {
   doctorName?: string;
   doctorPhoto?: string;
   doctorSpecialty?: string;
+  doctor_id?: number;
+  admitReason?: string;
 }
 
 export type UserRole = 'receptionist' | 'physician' | 'machinehub';

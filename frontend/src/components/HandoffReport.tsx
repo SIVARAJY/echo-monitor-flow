@@ -45,9 +45,9 @@ export default function HandoffReport({ patients, onClose }: HandoffReportProps)
   const handlePrint = () => window.print();
 
   return (
-    <div className="fixed inset-0 z-50 overflow-auto" style={{ background: 'hsl(222 28% 7%)' }}>
+    <div className="fixed inset-0 z-50 overflow-auto bg-background">
       {/* ── Controls (hidden in print) ──────────────────────── */}
-      <div className="print:hidden sticky top-0 z-10 flex items-center justify-between px-6 py-3 border-b border-border" style={{ background: 'hsl(222 26% 9%)' }}>
+      <div className="print:hidden sticky top-0 z-10 flex items-center justify-between px-6 py-3 border-b border-border bg-card">
         <div className="flex items-center gap-3">
           <FileText className="w-5 h-5 text-primary" />
           <span className="font-mono text-base font-bold text-foreground">SHIFT HANDOFF REPORT</span>

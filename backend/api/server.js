@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -8,11 +11,11 @@ app.use(express.json());
 
 // ── MySQL connection pool ────────────────────────────────────
 const pool = mysql.createPool({
-  host: 'localhost',
-  port: 3306,
-  user: 'root',
-  password: 'Siva1226',
-  database: 'sepsisguard',
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'sepsisguard',
   waitForConnections: true,
   connectionLimit: 10,
 });
@@ -95,10 +98,21 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(409).json({ error: 'Staff ID already exists' });
     }
 
+    let insertDoctorId = null;
+
+    if (role === 'physician') {
+      // Create a doctor record
+      const [doctorResult] = await pool.query(
+        'INSERT INTO doctors (name, specialty, photo_url, email) VALUES (?, ?, ?, ?)',
+        [name, 'General Physician', '', email || null]
+      );
+      insertDoctorId = doctorResult.insertId;
+    }
+
     // Insert new staff user
     await pool.query(
-      'INSERT INTO staff_users (staff_id, name, role, access_key, email) VALUES (?, ?, ?, ?, ?)',
-      [staffId, name, role, accessKey, email || null]
+      'INSERT INTO staff_users (staff_id, name, role, access_key, email, doctor_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [staffId, name, role, accessKey, email || null, insertDoctorId]
     );
 
     res.status(201).json({
@@ -163,8 +177,8 @@ app.post('/api/patients', async (req, res) => {
   const p = req.body;
   try {
     await pool.query(
-      `INSERT INTO patients (id, name, age, gender, admit_time, bed, status, hr, sys, dia, rr, spo2, temp, risk_score, risk_level, sepsis_flags, survival_prediction, trend_history, doctor_name, doctor_photo, doctor_specialty, doctor_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO patients (id, name, age, gender, admit_time, bed, status, hr, sys, dia, rr, spo2, temp, risk_score, risk_level, sepsis_flags, survival_prediction, trend_history, doctor_name, doctor_photo, doctor_specialty, doctor_id, admit_reason)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         p.id, p.name, p.age, p.gender, p.admit_time, p.bed, p.status || 'admitted',
         p.hr, p.sys, p.dia, p.rr, p.spo2, p.temp,
@@ -174,6 +188,7 @@ app.post('/api/patients', async (req, res) => {
         JSON.stringify(p.trend_history || []),
         p.doctor_name || null, p.doctor_photo || null, p.doctor_specialty || null,
         p.doctor_id || null,
+        p.admit_reason || null,
       ]
     );
     res.status(201).json({ success: true, id: p.id });
@@ -227,12 +242,12 @@ app.put('/api/patients/:id/trends', async (req, res) => {
 });
 
 // ── Start server ─────────────────────────────────────────────
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`✅ SepsisGuard API running at http://localhost:${PORT}`);
-  console.log(`   Health:    http://localhost:${PORT}/api/health`);
-  console.log(`   Doctors:   http://localhost:${PORT}/api/doctors`);
-  console.log(`   Patients:  http://localhost:${PORT}/api/patients`);
-  console.log(`   Login:     POST http://localhost:${PORT}/api/auth/login`);
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ SepsisGuard API running at port ${PORT}`);
+  console.log(`   Health:    /api/health`);
+  console.log(`   Doctors:   /api/doctors`);
+  console.log(`   Patients:  /api/patients`);
+  console.log(`   Login:     POST /api/auth/login`);
 });
 

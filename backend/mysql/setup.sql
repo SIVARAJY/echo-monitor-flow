@@ -36,15 +36,11 @@ CREATE TABLE IF NOT EXISTS staff_users (
 );
 
 -- ── Seed: Default doctors ────────────────────────────────────
-INSERT INTO doctors (name, specialty, photo_url, department) VALUES
-  ('Dr. Arjun Raj',    'Intensivist',    '/dr-raj.png',   'ICU'),
-  ('Dr. Sarah Chen',   'Critical Care',  '/dr-chen.png',  'ICU'),
-  ('Dr. Marcus James', 'Emergency Med',  '/dr-james.png', 'Emergency');
+-- (No default doctors; must be registered via the UI)
 
 -- ── Seed: Default staff users ────────────────────────────────
 INSERT INTO staff_users (staff_id, name, role, access_key, doctor_id) VALUES
   ('r0', 'Reception Staff',  'receptionist', '0', NULL),
-  ('d0', 'Dr. Arjun Raj',    'physician',    '0', 1),
   ('p0', 'Lab Technician',   'machinehub',   '0', NULL);
 
 -- ── Patients table (replaces Supabase) ───────────────────────
@@ -71,6 +67,7 @@ CREATE TABLE IF NOT EXISTS patients (
   doctor_photo VARCHAR(255) DEFAULT NULL,
   doctor_specialty VARCHAR(100) DEFAULT NULL,
   doctor_id INT DEFAULT NULL,
+  admit_reason VARCHAR(255) DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE SET NULL
