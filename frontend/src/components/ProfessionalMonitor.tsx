@@ -1,7 +1,8 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { Patient, formatDuration } from '@/lib/sepsisEngine';
-import { X, Volume2, Radio } from 'lucide-react';
+import { X, Volume2, Radio, Brain, CheckCircle2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import CorrelationHeatmap from './CorrelationHeatmap';
+import ClinicalDecisionSupport from './ClinicalDecisionSupport';
 
 interface ProfessionalMonitorProps {
   patient: Patient;
@@ -142,7 +143,7 @@ export default function ProfessionalMonitor({ patient, onClose }: ProfessionalMo
           </span>
           {patient.doctorName && (
             <div className="flex items-center gap-1.5 bg-secondary/50 px-2 py-1 rounded text-xs">
-              <img src={patient.doctorPhoto || '/placeholder.svg'} alt={patient.doctorName} className="w-4 h-4 rounded-full" />
+              <img src={patient.doctorPhoto || '/placeholder.svg'} alt={patient.doctorName} className="w-4 h-4 rounded-full object-cover" />
               <span className="font-mono text-foreground">{patient.doctorName}</span>
             </div>
           )}
@@ -167,58 +168,94 @@ export default function ProfessionalMonitor({ patient, onClose }: ProfessionalMo
         </div>
       </div>
 
-      {/* ── Vitals bar ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-6 border-b" style={{ borderColor: 'hsl(222 18% 18%)' }}>
-        {[
-          { label: 'HR', value: v.hr, unit: 'bpm', color: 'text-vital-green' },
-          { label: 'SYS/DIA', value: `${v.sys}/${v.dia}`, unit: 'mmHg', color: 'text-vital-red' },
-          { label: 'RR', value: v.rr, unit: '/min', color: 'text-vital-yellow' },
-          { label: 'SpO2', value: v.spo2, unit: '%', color: 'text-vital-blue' },
-          { label: 'TEMP', value: v.temp, unit: '°C', color: 'text-vital-purple' },
-          { label: 'SCORE', value: patient.riskScore, unit: 'pts', color: isCritical ? 'text-vital-red' : 'text-vital-green' },
-        ].map(item => (
-          <div key={item.label} className="text-center py-3 border-r last:border-r-0" style={{ borderColor: 'hsl(222 18% 18%)', background: 'hsl(222 26% 7%)' }}>
-            <div className="text-[10px] font-mono text-muted-foreground tracking-widest">{item.label}</div>
-            <div className={`text-3xl font-mono font-bold ${item.color} leading-tight mt-1`}>{item.value}</div>
-            <div className="text-[10px] font-mono text-muted-foreground">{item.unit}</div>
+      <div className="flex-1 flex overflow-hidden">
+        {/* ── Left Content: Vitals + Waveforms ─────────────────── */}
+        <div className="flex-1 flex flex-col border-r" style={{ borderColor: 'hsl(222 18% 18%)' }}>
+          {/* Vitals bar */}
+          <div className="grid grid-cols-6 border-b" style={{ borderColor: 'hsl(222 18% 18%)' }}>
+            {[
+              { label: 'HR', value: v.hr, unit: 'bpm', color: 'text-vital-green' },
+              { label: 'SYS/DIA', value: `${v.sys}/${v.dia}`, unit: 'mmHg', color: 'text-vital-red' },
+              { label: 'RR', value: v.rr, unit: '/min', color: 'text-vital-yellow' },
+              { label: 'SpO2', value: v.spo2, unit: '%', color: 'text-vital-blue' },
+              { label: 'TEMP', value: v.temp, unit: '°C', color: 'text-vital-purple' },
+              { label: 'SCORE', value: patient.riskScore, unit: 'pts', color: isCritical ? 'text-vital-red' : 'text-vital-green' },
+            ].map(item => (
+              <div key={item.label} className="text-center py-3 border-r last:border-r-0" style={{ borderColor: 'hsl(222 18% 18%)', background: 'hsl(222 26% 7%)' }}>
+                <div className="text-[10px] font-mono text-muted-foreground tracking-widest">{item.label}</div>
+                <div className={`text-3xl font-mono font-bold ${item.color} leading-tight mt-1`}>{item.value}</div>
+                <div className="text-[10px] font-mono text-muted-foreground">{item.unit}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* ── Waveforms ──────────────────────────────────────────── */}
-      <div className="flex-1 grid grid-rows-3">
-        {[
-          { ref: ecgRef, label: 'II ECG', color: 'text-vital-green' },
-          { ref: spo2Ref, label: 'SpO2 Pleth', color: 'text-vital-blue' },
-          { ref: respRef, label: 'RESP', color: 'text-vital-yellow' },
-        ].map(wave => (
-          <div key={wave.label} className="relative border-b last:border-b-0" style={{ borderColor: 'hsl(222 18% 18%)' }}>
-            <span className={`absolute top-2 left-3 text-xs font-mono font-semibold ${wave.color} z-10 tracking-widest`}>{wave.label}</span>
-            <canvas ref={wave.ref} className="w-full h-full" />
+          {/* Waveforms */}
+          <div className="flex-1 grid grid-rows-3 min-h-0">
+            {[
+              { ref: ecgRef, label: 'II ECG', color: 'text-vital-green' },
+              { ref: spo2Ref, label: 'SpO2 Pleth', color: 'text-vital-blue' },
+              { ref: respRef, label: 'RESP', color: 'text-vital-yellow' },
+            ].map(wave => (
+              <div key={wave.label} className="relative border-b last:border-b-0" style={{ borderColor: 'hsl(222 18% 18%)' }}>
+                <span className={`absolute top-2 left-3 text-xs font-mono font-semibold ${wave.color} z-10 tracking-widest`}>{wave.label}</span>
+                <canvas ref={wave.ref} className="w-full h-full" />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* ── Bottom panels: Flags + Correlation Heatmap ────────── */}
-      <div className="flex border-t" style={{ borderColor: 'hsl(222 18% 18%)' }}>
-        {/* Sepsis Flags */}
-        <div className="flex-1 px-5 py-2.5">
-          {patient.sepsisFlags.length > 0 ? (
-            <div className="flex items-center gap-3 flex-wrap" style={{ background: 'hsl(0 80% 60% / 0.12)', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', border: '1px solid hsl(0 80% 60% / 0.3)' }}>
-              <span className="text-xs font-mono text-destructive font-bold tracking-widest">⚠ FLAGS:</span>
-              {patient.sepsisFlags.map((f, i) => (
-                <span key={i} className="text-xs font-mono text-destructive/90 bg-destructive/10 border border-destructive/20 px-2 py-0.5 rounded">
-                  {f}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <div className="text-xs font-mono text-muted-foreground py-2">No active sepsis flags</div>
-          )}
+          {/* Bottom panel: Correlation Heatmap */}
+          <div className="px-4 py-2.5 bg-muted/20">
+            <CorrelationHeatmap patient={patient} />
+          </div>
         </div>
-        {/* Correlation Heatmap */}
-        <div className="px-4 py-2.5 border-l" style={{ borderColor: 'hsl(222 18% 18%)' }}>
-          <CorrelationHeatmap patient={patient} />
+
+        {/* ── Right Content: Clinical Decision Support (NEW) ──── */}
+        <div className="w-80 flex flex-col p-4 space-y-4 overflow-y-auto" style={{ background: 'hsl(222 28% 6%)' }}>
+          <ClinicalDecisionSupport patient={patient} />
+          
+          {/* Sepsis Flags (Moved to Sidebar) */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 px-1">
+              <ShieldAlert className="w-4 h-4 text-destructive" />
+              <span className="text-[10px] font-mono font-bold text-muted-foreground tracking-widest uppercase">Clinical Surveillance</span>
+            </div>
+            {patient.sepsisFlags.length > 0 ? (
+              <div className="space-y-2">
+                {patient.sepsisFlags.map((f, i) => (
+                  <div key={i} className="text-[11px] font-mono text-destructive bg-destructive/10 border border-destructive/20 px-3 py-2 rounded-lg flex items-start gap-2">
+                    <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                    <span>{f}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-secondary/10 border border-border/30 rounded-lg p-3 text-center">
+                <CheckCircle2 className="w-5 h-5 text-vital-green mx-auto mb-1 opacity-50" />
+                <span className="text-[10px] font-mono text-muted-foreground">No active Sepsis flags</span>
+              </div>
+            )}
+          </div>
+
+          {/* AI Activity Log / Monitor Specs */}
+          <div className="mt-auto p-4 rounded-xl border border-border/40 bg-card/30">
+            <div className="flex items-center gap-2 mb-3">
+              <Brain className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] font-mono font-bold text-primary tracking-widest uppercase">Predictive Engine</span>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-mono">
+                <span className="text-muted-foreground">Pattern Match:</span>
+                <span className="text-foreground">Sepsis-3 (qSOFA)</span>
+              </div>
+              <div className="flex justify-between text-[10px] font-mono">
+                <span className="text-muted-foreground">Data Sampling:</span>
+                <span className="text-foreground">250Hz LIVE</span>
+              </div>
+              <div className="w-full bg-secondary h-1 rounded-full overflow-hidden mt-2">
+                <div className="bg-primary h-full animate-progress" style={{ width: '65%' }} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

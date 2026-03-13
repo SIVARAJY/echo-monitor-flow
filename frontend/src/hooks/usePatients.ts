@@ -28,6 +28,9 @@ function rowToPatient(row: any): Patient {
     status: row.status as Patient['status'],
     doctorName: row.doctor_name,
     doctorPhoto: row.doctor_photo,
+    doctorSpecialty: row.doctor_specialty || undefined,
+    doctor_id: row.doctor_id || undefined,
+    admitReason: row.admit_reason || undefined,
   };
 }
 
@@ -109,6 +112,9 @@ export function usePatients(doctorId?: number) {
           trend_history: patient.trendHistory,
           doctor_name: patient.doctorName || null,
           doctor_photo: patient.doctorPhoto || null,
+          doctor_specialty: patient.doctorSpecialty || null,
+          doctor_id: patient.doctor_id || null,
+          admit_reason: patient.admitReason || null,
         }),
       });
       // Refresh after admit

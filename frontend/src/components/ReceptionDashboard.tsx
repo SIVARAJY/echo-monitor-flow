@@ -25,7 +25,7 @@ function LiveClock() {
 
 import { useEffect } from 'react';
 import { Bed, UserPlus, Clock, Activity } from 'lucide-react';
-import { generatePatientId, generateBedNumber, getDefaultVitals } from '@/lib/sepsisEngine';
+import { generatePatientId, generateBedNumber, getDefaultVitals, formatDuration } from '@/lib/sepsisEngine';
 import { useDoctors } from '@/hooks/useDoctors';
 
 export default function ReceptionDashboard({ onLogout }: ReceptionDashboardProps) {
@@ -33,6 +33,7 @@ export default function ReceptionDashboard({ onLogout }: ReceptionDashboardProps
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState<'M' | 'F'>('M');
+  const [admitReason, setAdmitReason] = useState('');
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | ''>('');
   const [now, setNow] = useState(Date.now());
   const { dbDoctors } = useDoctors();
@@ -69,11 +70,13 @@ export default function ReceptionDashboard({ onLogout }: ReceptionDashboardProps
       doctorPhoto: dbDoctor.photo_url,
       doctorSpecialty: dbDoctor.specialty,
       doctor_id: dbDoctor.id,
+      admit_reason: admitReason.trim(),
     } as any;
 
     handleAdmit(patient);
     setName('');
     setAge('');
+    setAdmitReason('');
     setSelectedDoctorId('');
   };
 
@@ -115,44 +118,51 @@ export default function ReceptionDashboard({ onLogout }: ReceptionDashboardProps
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Age</label>
-                  <input
-                    value={age}
-                    onChange={e => setAge(e.target.value)}
-                    type="number"
-                    placeholder="Years"
-                    className="w-full bg-secondary border border-border rounded-md px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Gender</label>
-                  <div className="flex gap-2 h-[46px]">
-                    <button
-                      onClick={() => setGender('M')}
-                      className={`flex-1 rounded-md text-sm font-mono font-semibold border transition-all ${gender === 'M' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'}`}
-                    >Male</button>
-                    <button
-                      onClick={() => setGender('F')}
-                      className={`flex-1 rounded-md text-sm font-mono font-semibold border transition-all ${gender === 'F' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'}`}
-                    >Female</button>
-                  </div>
-                </div>
+              <div>
+                <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Age</label>
+                <input
+                  value={age}
+                  onChange={e => setAge(e.target.value)}
+                  type="number"
+                  placeholder="Years"
+                  className="w-full bg-secondary border border-border rounded-md px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50"
+                />
               </div>
               <div>
-                <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Physician</label>
-                <select
-                  value={selectedDoctorId}
-                  onChange={e => setSelectedDoctorId(e.target.value ? parseInt(e.target.value) : '')}
-                  className="w-full h-[46px] bg-secondary border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
-                >
-                  <option value="">Select Doctor</option>
-                  {dbDoctors.map(doc => (
-                    <option key={doc.id} value={doc.id}>{doc.name} ({doc.specialty})</option>
-                  ))}
-                </select>
+                <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Gender</label>
+                <div className="flex gap-2 h-[46px]">
+                  <button
+                    onClick={() => setGender('M')}
+                    className={`flex-1 rounded-md text-sm font-mono font-semibold border transition-all ${gender === 'M' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'}`}
+                  >Male</button>
+                  <button
+                    onClick={() => setGender('F')}
+                    className={`flex-1 rounded-md text-sm font-mono font-semibold border transition-all ${gender === 'F' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground'}`}
+                  >Female</button>
+                </div>
               </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Reason for Admit</label>
+              <input
+                value={admitReason}
+                onChange={e => setAdmitReason(e.target.value)}
+                placeholder="e.g. Sepsis Protocol, Pneumonia"
+                className="w-full bg-secondary border border-border rounded-md px-3 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono text-muted-foreground mb-1.5 tracking-widest uppercase">Physician</label>
+              <select
+                value={selectedDoctorId}
+                onChange={e => setSelectedDoctorId(e.target.value ? parseInt(e.target.value) : '')}
+                className="w-full h-[46px] bg-secondary border border-border rounded-md px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
+              >
+                <option value="">Select Doctor</option>
+                {dbDoctors.map(doc => (
+                  <option key={doc.id} value={doc.id}>{doc.name} ({doc.specialty})</option>
+                ))}
+              </select>
             </div>
           </div>
           <button
@@ -206,21 +216,25 @@ export default function ReceptionDashboard({ onLogout }: ReceptionDashboardProps
                         <span className={`vital-badge vital-${p.riskLevel}`}>{p.riskLevel.toUpperCase()}</span>
                       </td>
                       <td className="py-3 pr-4">
-                        {p.doctorPhoto ? (
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          {p.doctorPhoto ? (
                             <img
                               src={p.doctorPhoto}
-                              alt={p.doctorName}
+                              alt={p.doctorName || 'Doctor'}
                               className="w-8 h-8 rounded-full object-cover border-2 border-primary/40"
                             />
-                            <div>
-                               <div className="text-xs font-semibold text-foreground leading-tight">{p.doctorName}</div>
-                               <div className="text-[10px] font-mono text-muted-foreground">{p.doctorSpecialty}</div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] font-mono font-bold text-muted-foreground">
+                              {p.doctorName ? p.doctorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'DR'}
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-xs font-semibold text-foreground leading-tight">{p.doctorName || 'Unassigned'}</div>
+                            <div className="text-[10px] font-mono text-muted-foreground">
+                              {p.doctorSpecialty || (p.doctorName ? 'Physician' : '—')}
                             </div>
                           </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground font-mono">—</span>
-                        )}
+                        </div>
                       </td>
                       <td className="py-3 text-right">
                         <button
