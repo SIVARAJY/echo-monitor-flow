@@ -21,6 +21,9 @@ export interface Patient {
   trendHistory: { time: number; score: number }[];
   bed: string;
   status: 'admitted' | 'monitoring' | 'discharged';
+  doctorName?: string;
+  doctorPhoto?: string;
+  doctorSpecialty?: string;
 }
 
 export type UserRole = 'receptionist' | 'physician' | 'machinehub';
@@ -119,4 +122,20 @@ export function generatePatientId(): string {
   const now = Date.now();
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `P-${now}-${rand}`;
+}
+
+export interface Doctor {
+  name: string;
+  specialty: string;
+  photo: string;
+}
+
+export const DOCTORS: Doctor[] = [
+  { name: 'Dr. Arjun Raj', specialty: 'Intensivist', photo: '/dr-raj.png' },
+  { name: 'Dr. Sarah Chen', specialty: 'Critical Care', photo: '/dr-chen.png' },
+  { name: 'Dr. Marcus James', specialty: 'Emergency Med', photo: '/dr-james.png' },
+];
+
+export function pickDoctor(): Doctor {
+  return DOCTORS[Math.floor(Math.random() * DOCTORS.length)];
 }
